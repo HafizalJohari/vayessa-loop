@@ -28,6 +28,7 @@ class StrudelEngineService {
   private replInstance: any = null;
   private analyser: AnalyserNode | null = null;
   private activePattern: AnyPattern = null;
+  private lastEvaluatedCode = '';
   private onEvalListeners = new Set<(code: string) => void>();
 
   // Smooth transition & metronome state
@@ -469,6 +470,8 @@ class StrudelEngineService {
         throw this.lastEvalError;
       }
 
+      this.lastEvaluatedCode = code;
+
       // If practice speed != 1x and code had setcpm, scale active cps gently
       if (hasExplicitTempo && state.practiceSpeed !== 1 && this.replInstance?.scheduler?.cps) {
         this.replInstance.scheduler.setCps(
@@ -615,6 +618,60 @@ class StrudelEngineService {
       // ignore
     }
     return 0;
+  }
+
+  getLastEvaluatedCode(): string {
+    return this.lastEvaluatedCode;
+  }
+
+  /**
+   * Return exact character ranges ({ start, end }) in the Pattern Editor for all
+   * mini-notation tokens currently playing at this moment (just like strudel.cc!).
+   */
+  getActiveSyntaxLocations(): Array<{ start: number; end: number }> {
+    if (!this.activePattern || typeof this.activePattern.queryArc !== 'function') {
+      return [];
+    }
+    try {
+      const now = this.getCurrentCycle();
+      const haps = this.activePattern.queryArc(now, now + 0.002) as Array<{
+        whole?: { begin: { valueOf(): number }; end: { valueOf(): number } };
+        part: { begin: { valueOf(): number }; end: { valueOf(): number } };
+        context?: { locations?: Array<{ start: number; end: number }> };
+      }>;
+
+      const seen = new Set<string>();
+      const ranges: Array<{ start: number; end: number }> = [];
+
+      for (const hap of haps) {
+        const span = hap.whole ?? hap.part;
+        const begin = Number(span.begin.valueOf());
+        const end = Number(span.end.valueOf());
+        if (now < begin || now > end) continue;
+
+        const locs = hap.context?.locations;
+        if (!Array.isArray(locs)) continue;
+
+        for (const loc of locs) {
+          if (
+            typeof loc?.start === 'number' &&
+            typeof loc?.end === 'number' &&
+            loc.end > loc.start
+          ) {
+            const key = `${loc.start}:${loc.end}`;
+            if (!seen.has(key)) {
+              seen.add(key);
+              ranges.push({ start: loc.start, end: loc.end });
+            }
+          }
+        }
+      }
+
+      ranges.sort((a, b) => a.start - b.start || a.end - b.end);
+      return ranges;
+    } catch {
+      return [];
+    }
   }
 
   getWindowHaps(windowCycles = 2): ActiveHapView[] {

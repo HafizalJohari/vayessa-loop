@@ -93,6 +93,15 @@ body,
   outline: none !important;
 }
 
+/* Live Strudel mini-notation active playing token highlight */
+.strudel-editor-host .cm-strudel-active-token {
+  background-color: rgba(52, 211, 153, 0.35) !important;
+  color: #ffffff !important;
+  outline: 1px solid rgba(52, 211, 153, 0.85);
+  border-radius: 3px;
+  box-shadow: 0 0 8px rgba(52, 211, 153, 0.45);
+}
+
 /* Range input DAW styling */
 input[type="range"].studio-slider {
   -webkit-appearance: none;

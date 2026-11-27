@@ -24,6 +24,33 @@ export interface StrudelEditorHandle {
 }
 
 const setErrorLineEffect = StateEffect.define<number | null>();
+const setActiveTokensEffect = StateEffect.define<Array<{ start: number; end: number }>>();
+
+const activeTokenDecoration = Decoration.mark({
+  class: 'cm-strudel-active-token',
+});
+
+const activeTokensField = StateField.define<DecorationSet>({
+  create() {
+    return Decoration.none;
+  },
+  update(deco, tr) {
+    if (tr.docChanged) {
+      return Decoration.none;
+    }
+    for (const eff of tr.effects) {
+      if (eff.is(setActiveTokensEffect)) {
+        const docLen = tr.state.doc.length;
+        const marks = eff.value
+          .filter((r) => r.start >= 0 && r.end <= docLen && r.end > r.start)
+          .map((r) => activeTokenDecoration.range(r.start, r.end));
+        return Decoration.set(marks, true);
+      }
+    }
+    return deco;
+  },
+  provide: (f) => EditorView.decorations.from(f),
+});
 
 const errorLineDecoration = Decoration.line({
   attributes: {
@@ -137,6 +164,7 @@ export const StrudelEditor = forwardRef<StrudelEditorHandle>(function StrudelEdi
         javascript(),
         oneDark,
         errorLineField,
+        activeTokensField,
         evalKeymap,
         keymap.of([indentWithTab, ...defaultKeymap, ...historyKeymap]),
         EditorView.lineWrapping,
@@ -176,6 +204,40 @@ export const StrudelEditor = forwardRef<StrudelEditorHandle>(function StrudelEdi
       effects: setErrorLineEffect.of(syntaxDiagnostic ? syntaxDiagnostic.line : null),
     });
   }, [syntaxDiagnostic]);
+
+  // 60fps Live Mini-Notation Syntax Highlighting (lights up playing notes/samples in real time!)
+  useEffect(() => {
+    let rafId = 0;
+    let lastSignature = '';
+
+    const tick = () => {
+      const view = viewRef.current;
+      const playing = useStudioStore.getState().isPlaying;
+
+      if (view) {
+        if (!playing) {
+          if (lastSignature !== '') {
+            lastSignature = '';
+            view.dispatch({ effects: setActiveTokensEffect.of([]) });
+          }
+        } else {
+          const docStr = view.state.doc.toString();
+          const evalCode = strudelEngine.getLastEvaluatedCode();
+          const locs = docStr === evalCode ? strudelEngine.getActiveSyntaxLocations() : [];
+          const sig = locs.map((l) => `${l.start}-${l.end}`).join(',');
+          if (sig !== lastSignature) {
+            lastSignature = sig;
+            view.dispatch({ effects: setActiveTokensEffect.of(locs) });
+          }
+        }
+      }
+
+      rafId = requestAnimationFrame(tick);
+    };
+
+    rafId = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(rafId);
+  }, []);
 
   return (
     <div className="relative flex flex-col h-full min-h-0 bg-[#0d0f12]">
