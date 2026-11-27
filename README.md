@@ -16,7 +16,7 @@
   <img src="https://img.shields.io/badge/Strudel-Engine-34D399?style=flat-square" alt="Strudel Engine" />
   <img src="https://img.shields.io/badge/WebMIDI-Ready-F59E0B?style=flat-square" alt="WebMIDI" />
   <img src="https://img.shields.io/badge/Hydra-WebGL_2nd_Monitor-E879F9?style=flat-square" alt="Hydra 2nd Monitor" />
-  <img src="https://img.shields.io/badge/AI_MCP-19_Tools-A78BFA?style=flat-square" alt="MCP Server" />
+  <img src="https://img.shields.io/badge/AI_MCP-20_Tools-A78BFA?style=flat-square" alt="MCP Server" />
 </p>
 
 ---
@@ -62,8 +62,8 @@
   <img src="./docs/hydra-stage.png" alt="VAYESSA LOOP Hydra 2nd Monitor" width="85%" />
 </p>
 
-### Universal AI Control (Model Context Protocol — MCP)
-- Built-in **MCP Server** (`dist-mcp/mcp-server/index.js`) exposing **19 tools** and **3 resources** so **Claude, Gemini, ChatGPT/Codex, Cursor, Antigravity, or any MCP client** can compose patterns, mix tracks, sculpt the Oscillator, transition Live Playlists, and drive Hydra visuals in real time.
+### Universal AI Control (Model Context Protocol — MCP) & WAV Export
+- Built-in **MCP Server** (`dist-mcp/mcp-server/index.js`) exposing **20 tools** (including **`record_audio`** to record & save stereo 16-bit PCM `.wav` files directly to disk for video/motion projects) and **3 resources** so **Claude, Gemini, ChatGPT/Codex, Cursor, Antigravity, or any MCP client** can compose, mix, fade playlists, sculpt the Oscillator, and drive Hydra visuals in real time.
 
 ---
 
@@ -115,6 +115,16 @@ Read the full step-by-step guide in **[USER_MANUAL.md](./USER_MANUAL.md)**.
 
 ---
 
+## Credits & Acknowledgments
+
+**VAYESSA LOOP** is built directly on top of the incredible open-source live-coding ecosystem created by:
+
+- **[Strudel](https://codeberg.org/uzu/strudel)** (`https://codeberg.org/uzu/strudel`) — The core pattern language, mini-notation parser, transpiler, WebAudio (`superdough`), Soundfonts, Tonal, and WebMIDI engine created by **Felix Roos**, **Alex McLean**, and the **Strudel / TidalCycles** community. All core live-coding audio and pattern capabilities in VAYESSA LOOP are powered by the official `@strudel/*` packages.
+- **[Hydra](https://hydra.ojack.xyz/)** — Live-coding WebGL video synthesizer created by **Olivia Jack** (`hydra-synth`), powering the 2nd Monitor visual stage.
+- **[CodeMirror 6](https://codemirror.net/)** — Extensible code editor powering the Pattern Editor and live mini-notation highlighting.
+
+---
+
 ## License
 
-Built on top of the open-source [Strudel](https://codeberg.org/uzu/strudel) and [Hydra](https://hydra.ojack.xyz/) ecosystems.
+Built with gratitude on top of the open-source [Strudel](https://codeberg.org/uzu/strudel) (AGPL-3.0) and [Hydra](https://hydra.ojack.xyz/) ecosystems.

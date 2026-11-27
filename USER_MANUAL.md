@@ -205,3 +205,9 @@ Strudel Studio includes a universal **Model Context Protocol (MCP)** server (`di
 - *"Slowly open Macro 1 to 0.85 and mute the drums track."*
 - *"Switch the Oscillator to an FM Glass Bell patch and add a new track to my Live Playlist."*
 - *"Fade to the next track in my Live Playlist and switch Hydra to Cyber Audio Grid."*
+
+---
+
+## Credits
+
+Powered by **[Strudel](https://codeberg.org/uzu/strudel)** (`https://codeberg.org/uzu/strudel`) and **[Hydra](https://hydra.ojack.xyz/)**. Full credit to Felix Roos, Alex McLean, Olivia Jack, and the open-source Strudel / TidalCycles community.

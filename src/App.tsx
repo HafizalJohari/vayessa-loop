@@ -126,7 +126,15 @@ function StudioMainWorkspace() {
                   ))}
                 </div>
                 <span className="text-[10px] font-mono text-[#5c6577] hidden xl:inline whitespace-nowrap">
-                  Vayessa Loop · WebAudio + WebMIDI + Hydra + MCP
+                  Vayessa Loop · Powered by{' '}
+                  <a
+                    href="https://codeberg.org/uzu/strudel"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-emerald-400/80 hover:text-emerald-300 underline"
+                  >
+                    Strudel
+                  </a>
                 </span>
               </div>
 
