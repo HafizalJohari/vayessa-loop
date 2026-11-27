@@ -10,6 +10,7 @@ import {
   Save,
   Sparkles,
   Trash2,
+  Waves,
 } from 'lucide-react';
 import { HYDRA_PRESETS } from '@/data/hydraPresets';
 import { useStudioStore } from '@/store/useStudioStore';
@@ -122,6 +123,26 @@ export function HydraPanel() {
           <button
             type="button"
             onClick={() => {
+              const oceanPreset = HYDRA_PRESETS.find((p) => p.id === 'vgpu-particles-ocean');
+              if (oceanPreset) {
+                handleSelectPreset(oceanPreset.id, oceanPreset.code);
+              } else {
+                hydraBridge.sendStageMode('fft-ocean');
+              }
+            }}
+            className={`p-1.5 rounded-lg border text-xs cursor-pointer ${
+              hydraPresetId === 'vgpu-particles-ocean'
+                ? 'bg-emerald-500/20 border-emerald-400/50 text-emerald-300'
+                : 'bg-[#171c26] border-[#262e3e] text-emerald-300 hover:bg-emerald-500/20 hover:border-emerald-400/40'
+            }`}
+            title="Activate WebGPU 3D Particles Ocean (Beat-Reactive) on 2nd Monitor"
+          >
+            <Waves className="w-3.5 h-3.5" />
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
               const camPreset = HYDRA_PRESETS.find((p) => p.id === 'webcam-drop');
               if (camPreset) {
                 handleSelectPreset(camPreset.id, camPreset.code);
@@ -201,6 +222,11 @@ export function HydraPanel() {
               <div className="min-w-0">
                 <div className="text-[11px] font-semibold flex items-center gap-1.5">
                   <span className="truncate">{preset.name}</span>
+                  {preset.id === 'vgpu-particles-ocean' && (
+                    <span className="px-1 rounded bg-emerald-500/25 text-emerald-200 text-[8.5px] font-mono">
+                      WebGPU 3D
+                    </span>
+                  )}
                   {preset.isCustom && (
                     <span className="px-1 rounded bg-violet-500/25 text-violet-200 text-[8.5px] font-mono">
                       CUSTOM

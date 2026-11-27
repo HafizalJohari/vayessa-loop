@@ -2,6 +2,12 @@ import type { HydraPreset } from '@/types/studio';
 
 export const HYDRA_PRESETS: HydraPreset[] = [
   {
+    id: 'vgpu-particles-ocean',
+    name: 'WebGPU 3D: Particles Ocean (Beat)',
+    description: 'vgpu FFT Ocean simulation + glowing particle waves surging with kick, mids & Macros 1-3.',
+    code: `// WebGPU 3D Particles Ocean (vgpu fft-ocean)\n// Runs natively on WebGPU in the 2nd Monitor (/?view=hydra).\n// Beat-reactive: Bass -> Wave Height, Choppiness & Bloom | Mids/Highs -> Neon Glow | M1-M3 -> Intensity`,
+  },
+  {
     id: 'obsidian-chrome',
     name: 'Obsidian Liquid Chrome',
     description: 'Luxury dark mercury ripples with specular silver sheen & subtle cyan rim light.',

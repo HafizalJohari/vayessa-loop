@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Maximize2, Minimize2, Sparkles } from 'lucide-react';
 import { HYDRA_CHANNEL_NAME, type HydraBroadcastMessage } from '@/engine/hydraBridge';
 import { HYDRA_PRESETS } from '@/data/hydraPresets';
+import { FftOceanStage } from '@/components/Hydra/FftOceanStage';
 
 /**
  * Full-screen 2nd Monitor Hydra Visual Stage (opened via /?view=hydra).
@@ -12,6 +13,10 @@ export function HydraStageWindow() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const mirrorVideoRef = useRef<HTMLVideoElement | null>(null);
   const [mirroringInline, setMirroringInline] = useState(false);
+  const [stageMode, setStageMode] = useState<'hydra' | 'fft-ocean'>(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('mode') === 'ocean' ? 'fft-ocean' : 'hydra';
+  });
   const [projection3D, setProjection3D] = useState({
     rotateX: 0,
     rotateY: 0,
@@ -44,9 +49,66 @@ export function HydraStageWindow() {
     m8: 0.5,
   });
 
+  const hydraBootedRef = useRef(false);
+  const pendingHydraCodeRef = useRef<string | null>(null);
+
+  const runHydraCode = (code: string) => {
+    try {
+      setHydraError(null);
+      // Evaluate with Hydra globals on window
+      // eslint-disable-next-line no-new-func
+      const fn = new Function('studio', code);
+      fn(studioRef.current);
+    } catch (err) {
+      setHydraError(err instanceof Error ? err.message : String(err));
+    }
+  };
+
+  // Lazy-boot Hydra WebGL synth ONLY when stageMode === 'hydra' so WebGPU fft-ocean has dedicated GPU access
+  useEffect(() => {
+    if (stageMode !== 'hydra' || hydraBootedRef.current || !canvasRef.current) return;
+    let cancelled = false;
+
+    const bootHydra = async () => {
+      if (!canvasRef.current) return;
+      try {
+        (window as unknown as { global: typeof globalThis }).global = globalThis;
+        (window as unknown as { studio: typeof studioRef.current }).studio = studioRef.current;
+
+        const mod = await import('hydra-synth');
+        if (cancelled || !canvasRef.current) return;
+        const HydraCtor = mod.default ?? mod;
+        const canvas = canvasRef.current;
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        new HydraCtor({
+          canvas,
+          detectAudio: false,
+          makeGlobal: true,
+        });
+        hydraBootedRef.current = true;
+
+        const initialCode =
+          pendingHydraCodeRef.current ??
+          (HYDRA_PRESETS.find((p) => p.id !== 'vgpu-particles-ocean') ?? HYDRA_PRESETS[0]).code;
+        pendingHydraCodeRef.current = null;
+        runHydraCode(initialCode);
+      } catch (err) {
+        if (!cancelled) {
+          setHydraError(err instanceof Error ? err.message : String(err));
+        }
+      }
+    };
+
+    void bootHydra();
+    return () => {
+      cancelled = true;
+    };
+  }, [stageMode]);
+
   useEffect(() => {
     document.title = 'VAYESSA LOOP — Hydra 2nd Monitor';
-    let hydraInstance: { eval?: (code: string) => void } | null = null;
     let channel: BroadcastChannel | null = null;
     let hideTimer: number | null = null;
 
@@ -62,41 +124,6 @@ export function HydraStageWindow() {
     // Expose globalThis polyfill for hydra-synth & live studio reactive object
     (window as unknown as { global: typeof globalThis }).global = globalThis;
     (window as unknown as { studio: typeof studioRef.current }).studio = studioRef.current;
-
-    const runHydraCode = (code: string) => {
-      try {
-        setHydraError(null);
-        // Evaluate with Hydra globals on window
-        // eslint-disable-next-line no-new-func
-        const fn = new Function('studio', code);
-        fn(studioRef.current);
-      } catch (err) {
-        setHydraError(err instanceof Error ? err.message : String(err));
-      }
-    };
-
-    const bootHydra = async () => {
-      if (!canvasRef.current) return;
-      try {
-        const mod = await import('hydra-synth');
-        const HydraCtor = mod.default ?? mod;
-        const canvas = canvasRef.current;
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
-
-        hydraInstance = new HydraCtor({
-          canvas,
-          detectAudio: false,
-          makeGlobal: true,
-        });
-
-        runHydraCode(HYDRA_PRESETS[0].code);
-      } catch (err) {
-        setHydraError(err instanceof Error ? err.message : String(err));
-      }
-    };
-
-    void bootHydra();
 
     const handleResize = () => {
       if (canvasRef.current) {
@@ -137,7 +164,13 @@ export function HydraStageWindow() {
         const msg = event.data;
         if (!msg) return;
         if (msg.type === 'inline_hydra_ready') {
+          setStageMode('hydra');
           attachInlineHydraMirror();
+        } else if (msg.type === 'stage_mode') {
+          setStageMode(msg.mode);
+          if (msg.mode === 'fft-ocean') {
+            setMirroringInline(false);
+          }
         } else if (msg.type === 'telemetry') {
           const s = studioRef.current;
           s.bass = msg.bass;
@@ -154,10 +187,19 @@ export function HydraStageWindow() {
           });
         } else if (msg.type === 'eval_hydra') {
           setMirroringInline(false);
-          runHydraCode(msg.code);
+          if (hydraBootedRef.current) {
+            runHydraCode(msg.code);
+          } else {
+            pendingHydraCodeRef.current = msg.code;
+          }
         } else if (msg.type === 'init_cam') {
           setMirroringInline(false);
-          runHydraCode('s0.initCam(); src(s0).scale(-1, 1, 1).out(o0);');
+          const camCode = 's0.initCam(); src(s0).scale(-1, 1, 1).out(o0);';
+          if (hydraBootedRef.current) {
+            runHydraCode(camCode);
+          } else {
+            pendingHydraCodeRef.current = camCode;
+          }
         } else if (msg.type === 'overlay') {
           setOverlay({ show: msg.showOverlay, title: msg.trackTitle, bpm: msg.bpm });
         } else if (msg.type === 'projection_3d') {
@@ -189,7 +231,6 @@ export function HydraStageWindow() {
       window.removeEventListener('keydown', onKeyDown);
       if (hideTimer !== null) window.clearTimeout(hideTimer);
       channel?.close();
-      void hydraInstance;
     };
   }, []);
 
@@ -227,10 +268,15 @@ export function HydraStageWindow() {
             : undefined
         }
       >
+        {/* WebGPU 3D Beat-Reactive Particles Ocean (vgpu fft-ocean) */}
+        {stageMode === 'fft-ocean' && <FftOceanStage studioRef={studioRef} />}
+
         {/* Standalone Hydra Stage Canvas (for Hydra Panel presets) */}
         <canvas
           ref={canvasRef}
-          className={`w-full h-full block ${mirroringInline ? 'hidden' : ''}`}
+          className={`w-full h-full block ${
+            stageMode === 'fft-ocean' || mirroringInline ? 'hidden' : ''
+          }`}
         />
 
         {/* Live 60fps Mirror of Inline Editor initHydra() Canvas (supports s0.initCam & multi-scene) */}
@@ -239,7 +285,9 @@ export function HydraStageWindow() {
           autoPlay
           muted
           playsInline
-          className={`w-full h-full object-cover block ${mirroringInline ? '' : 'hidden'}`}
+          className={`w-full h-full object-cover block ${
+            stageMode === 'hydra' && mirroringInline ? '' : 'hidden'
+          }`}
         />
 
         {/* MadMapper-style Projection Alignment Calibration Grid */}

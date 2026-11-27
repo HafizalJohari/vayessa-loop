@@ -343,7 +343,7 @@ server.tool(
 
 server.tool(
   'set_hydra_visual',
-  'Update the Hydra live WebGL visual synth on the 2nd Monitor using a modern built-in presetId ("obsidian-chrome", "prism-glass", "brutalist-grid", "infrared-aura", "optical-moire", "hyper-tunnel", "cyber-halftone", "webcam-drop") or custom Hydra JS code.',
+  'Update the Hydra live visual synth on the 2nd Monitor using a built-in presetId ("vgpu-particles-ocean" for WebGPU 3D beat-reactive Particles Ocean, "obsidian-chrome", "prism-glass", "brutalist-grid", "infrared-aura", "optical-moire", "hyper-tunnel", "cyber-halftone", "webcam-drop") or custom Hydra JS code.',
   {
     presetId: z.string().optional().describe('Built-in Hydra preset ID'),
     code: z.string().optional().describe('Custom Hydra synth code using studio.bass, studio.mid, studio.high, studio.m1..m8'),

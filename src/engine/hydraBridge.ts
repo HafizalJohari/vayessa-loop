@@ -9,6 +9,10 @@ export type HydraBroadcastMessage =
       presetId?: string;
     }
   | {
+      type: 'stage_mode';
+      mode: 'hydra' | 'fft-ocean';
+    }
+  | {
       type: 'telemetry';
       bass: number;
       mid: number;
@@ -102,7 +106,17 @@ class HydraBridgeService {
 
   sendCode(code: string, presetId?: string): void {
     const ch = this.ensureChannel();
+    if (presetId === 'vgpu-particles-ocean') {
+      ch?.postMessage({ type: 'stage_mode', mode: 'fft-ocean' } satisfies HydraBroadcastMessage);
+      return;
+    }
+    ch?.postMessage({ type: 'stage_mode', mode: 'hydra' } satisfies HydraBroadcastMessage);
     ch?.postMessage({ type: 'eval_hydra', code, presetId } satisfies HydraBroadcastMessage);
+  }
+
+  sendStageMode(mode: 'hydra' | 'fft-ocean'): void {
+    const ch = this.ensureChannel();
+    ch?.postMessage({ type: 'stage_mode', mode } satisfies HydraBroadcastMessage);
   }
 
   triggerWebcamOnStage(): void {
