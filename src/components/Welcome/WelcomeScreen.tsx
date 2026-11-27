@@ -1,48 +1,12 @@
 import { useCallback, useEffect, useState } from 'react';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, Volume2, VolumeX } from 'lucide-react';
 import { Keyboard, Patch, Phosphor, Turntable } from '@lucasmarkes/hairline/react';
 import { WebGpuBackdrop, type GpuRendererMode } from '@/components/Welcome/WebGpuBackdrop';
 import { strudelEngine } from '@/engine/strudelEngine';
+import { uiSound } from '@/engine/uiSound';
 
 interface WelcomeScreenProps {
   onEnter: () => void;
-}
-
-/**
- * Play a subtle, futuristic harmonic chime via WebAudio on Enter click
- * while simultaneously unlocking the browser AudioContext.
- */
-function playEnterChime() {
-  try {
-    const AudioCtx =
-      window.AudioContext ||
-      (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-    const ctx = new AudioCtx();
-    const now = ctx.currentTime;
-    const freqs = [261.63, 392.0, 523.25];
-
-    const filter = ctx.createBiquadFilter();
-    filter.type = 'lowpass';
-    filter.frequency.setValueAtTime(1800, now);
-    filter.frequency.exponentialRampToValueAtTime(320, now + 0.9);
-    filter.connect(ctx.destination);
-
-    freqs.forEach((f, idx) => {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = idx === 0 ? 'sine' : 'triangle';
-      osc.frequency.setValueAtTime(f, now);
-      gain.gain.setValueAtTime(0.0001, now);
-      gain.gain.linearRampToValueAtTime(idx === 0 ? 0.08 : 0.04, now + 0.04);
-      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.85);
-      osc.connect(gain);
-      gain.connect(filter);
-      osc.start(now);
-      osc.stop(now + 0.9);
-    });
-  } catch {
-    // ignore if audio unavailable
-  }
 }
 
 const HAIRLINE_THEME_VARS: React.CSSProperties = {
@@ -57,11 +21,12 @@ const HAIRLINE_THEME_VARS: React.CSSProperties = {
 export function WelcomeScreen({ onEnter }: WelcomeScreenProps) {
   const [gpuMode, setGpuMode] = useState<GpuRendererMode>('initializing');
   const [exiting, setExiting] = useState(false);
+  const [sfxEnabled, setSfxEnabled] = useState(true);
 
   const handleEnter = useCallback(() => {
     if (exiting) return;
     setExiting(true);
-    playEnterChime();
+    uiSound.playEnterChime();
     void strudelEngine.init();
     window.setTimeout(() => {
       onEnter();
@@ -69,13 +34,19 @@ export function WelcomeScreen({ onEnter }: WelcomeScreenProps) {
   }, [exiting, onEnter]);
 
   useEffect(() => {
+    const unlock = () => uiSound.unlock();
     const onKeyDown = (e: KeyboardEvent) => {
+      uiSound.unlock();
       if (e.key === 'Enter') {
         handleEnter();
       }
     };
+    window.addEventListener('pointerdown', unlock, { passive: true });
     window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
+    return () => {
+      window.removeEventListener('pointerdown', unlock);
+      window.removeEventListener('keydown', onKeyDown);
+    };
   }, [handleEnter]);
 
   return (
@@ -123,28 +94,55 @@ export function WelcomeScreen({ onEnter }: WelcomeScreenProps) {
             44.1KHZ · 24-BIT · WEBAUDIO · WEBMIDI · HYDRA
           </div>
 
-          <a
-            href="https://codeberg.org/uzu/strudel"
-            target="_blank"
-            rel="noreferrer"
-            className="text-white/50 hover:text-emerald-300 transition-colors"
-          >
-            POWERED BY STRUDEL
-          </a>
+          <div className="flex items-center gap-4">
+            <button
+              type="button"
+              onClick={() => {
+                const next = !sfxEnabled;
+                setSfxEnabled(next);
+                uiSound.setEnabled(next);
+                if (next) {
+                  uiSound.unlock();
+                  uiSound.playHover('link');
+                }
+              }}
+              className="inline-flex items-center gap-1.5 text-white/50 hover:text-emerald-300 transition-colors cursor-pointer"
+              title="Toggle minimal hover SFX"
+            >
+              {sfxEnabled ? <Volume2 className="w-3.5 h-3.5" /> : <VolumeX className="w-3.5 h-3.5" />}
+              <span className="hidden sm:inline">{sfxEnabled ? 'SFX ON' : 'SFX OFF'}</span>
+            </button>
+
+            <a
+              href="https://codeberg.org/uzu/strudel"
+              target="_blank"
+              rel="noreferrer"
+              onMouseEnter={() => uiSound.playHover('link')}
+              className="text-white/50 hover:text-emerald-300 transition-colors"
+            >
+              POWERED BY STRUDEL
+            </a>
+          </div>
         </header>
 
         {/* Center 3-Column Stage: Left Hairline Figures | Dead-Center ENTER | Right Hairline Figures */}
         <main className="flex-1 grid grid-cols-1 lg:grid-cols-[220px_1fr_220px] xl:grid-cols-[260px_1fr_260px] items-center gap-6 py-4 min-h-0">
           {/* Left Interactive Isometric Hairline Instruments */}
           <div className="hidden lg:flex flex-col gap-4">
-            <div className="p-2.5 rounded-xl bg-[#0b0e14]/75 backdrop-blur-sm border border-white/[0.08]">
+            <div
+              onMouseEnter={() => uiSound.playHover('patch')}
+              className="p-2.5 rounded-xl bg-[#0b0e14]/75 backdrop-blur-sm border border-white/[0.08] hover:border-emerald-400/35 transition-colors"
+            >
               <Patch play intensity={0.75} theme="dark" />
               <div className="mt-1.5 flex items-center justify-between text-[9px] font-mono tracking-[0.2em] uppercase text-white/40">
                 <span>01 // PATCH</span>
                 <span className="text-emerald-400/75">MIDI + ROUTING</span>
               </div>
             </div>
-            <div className="p-2.5 rounded-xl bg-[#0b0e14]/75 backdrop-blur-sm border border-white/[0.08]">
+            <div
+              onMouseEnter={() => uiSound.playHover('keys')}
+              className="p-2.5 rounded-xl bg-[#0b0e14]/75 backdrop-blur-sm border border-white/[0.08] hover:border-cyan-400/35 transition-colors"
+            >
               <Keyboard play intensity={0.75} theme="dark" />
               <div className="mt-1.5 flex items-center justify-between text-[9px] font-mono tracking-[0.2em] uppercase text-white/40">
                 <span>02 // KEYS</span>
@@ -175,6 +173,7 @@ export function WelcomeScreen({ onEnter }: WelcomeScreenProps) {
               <button
                 type="button"
                 onClick={handleEnter}
+                onMouseEnter={() => uiSound.playHover('enter')}
                 className="group relative inline-flex items-center gap-3 px-8 py-3.5 rounded-full bg-[#0b0e14]/75 hover:bg-emerald-400/[0.14] backdrop-blur-md border border-white/25 hover:border-emerald-300/80 text-xs sm:text-sm font-mono font-semibold tracking-[0.3em] uppercase text-white transition-all duration-300 shadow-[0_0_40px_rgba(52,211,153,0.08)] hover:shadow-[0_0_50px_rgba(52,211,153,0.28)] cursor-pointer"
               >
                 <span className="pl-[0.3em]">ENTER</span>
@@ -189,14 +188,20 @@ export function WelcomeScreen({ onEnter }: WelcomeScreenProps) {
 
           {/* Right Interactive Isometric Hairline Instruments */}
           <div className="hidden lg:flex flex-col gap-4">
-            <div className="p-2.5 rounded-xl bg-[#0b0e14]/75 backdrop-blur-sm border border-white/[0.08]">
+            <div
+              onMouseEnter={() => uiSound.playHover('deck')}
+              className="p-2.5 rounded-xl bg-[#0b0e14]/75 backdrop-blur-sm border border-white/[0.08] hover:border-emerald-400/35 transition-colors"
+            >
               <Turntable play intensity={0.75} theme="dark" />
               <div className="mt-1.5 flex items-center justify-between text-[9px] font-mono tracking-[0.2em] uppercase text-white/40">
                 <span>03 // DECK</span>
                 <span className="text-emerald-400/75">SAMPLER + FADE</span>
               </div>
             </div>
-            <div className="p-2.5 rounded-xl bg-[#0b0e14]/75 backdrop-blur-sm border border-white/[0.08]">
+            <div
+              onMouseEnter={() => uiSound.playHover('matrix')}
+              className="p-2.5 rounded-xl bg-[#0b0e14]/75 backdrop-blur-sm border border-white/[0.08] hover:border-cyan-400/35 transition-colors"
+            >
               <Phosphor play intensity={0.75} theme="dark" />
               <div className="mt-1.5 flex items-center justify-between text-[9px] font-mono tracking-[0.2em] uppercase text-white/40">
                 <span>04 // MATRIX</span>
