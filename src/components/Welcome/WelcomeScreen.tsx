@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { ArrowRight } from 'lucide-react';
+import { Keyboard, Patch, Phosphor, Turntable } from '@lucasmarkes/hairline/react';
 import { WebGpuBackdrop, type GpuRendererMode } from '@/components/Welcome/WebGpuBackdrop';
 import { strudelEngine } from '@/engine/strudelEngine';
 
@@ -18,7 +19,7 @@ function playEnterChime() {
       (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
     const ctx = new AudioCtx();
     const now = ctx.currentTime;
-    const freqs = [261.63, 392.0, 523.25]; // C4, G4, C5 fifth harmonic
+    const freqs = [261.63, 392.0, 523.25];
 
     const filter = ctx.createBiquadFilter();
     filter.type = 'lowpass';
@@ -43,6 +44,15 @@ function playEnterChime() {
     // ignore if audio unavailable
   }
 }
+
+const HAIRLINE_THEME_VARS: React.CSSProperties = {
+  ['--hairline-plate' as string]: '#0b0e14',
+  ['--hairline-hi' as string]: '#34d399',
+  ['--hairline-edge' as string]: '#94a3b8',
+  ['--hairline-mid' as string]: '#475569',
+  ['--hairline-lo' as string]: '#1e293b',
+  ['--hairline-stroke' as string]: '0.9',
+};
 
 export function WelcomeScreen({ onEnter }: WelcomeScreenProps) {
   const [gpuMode, setGpuMode] = useState<GpuRendererMode>('initializing');
@@ -70,6 +80,7 @@ export function WelcomeScreen({ onEnter }: WelcomeScreenProps) {
 
   return (
     <div
+      style={HAIRLINE_THEME_VARS}
       className={`fixed inset-0 z-50 bg-[#080a0e] text-[#eef2f8] overflow-hidden select-none transition-all duration-500 ${
         exiting ? 'opacity-0 scale-[1.03]' : 'opacity-100 scale-100'
       }`}
@@ -78,12 +89,9 @@ export function WelcomeScreen({ onEnter }: WelcomeScreenProps) {
       <WebGpuBackdrop onModeChange={setGpuMode} />
 
       {/* Architectural Hairline Framing & Precision Axes */}
-      <div className="pointer-events-none fixed inset-5 sm:inset-8 border border-white/[0.09]">
-        {/* Center Hairline Cross Axes */}
-        <div className="absolute inset-x-0 top-1/2 h-px bg-white/[0.055]" />
-        <div className="absolute inset-y-0 left-1/2 w-px bg-white/[0.055]" />
-
-        {/* Corner Registration Crosshairs (+) */}
+      <div className="pointer-events-none fixed inset-4 sm:inset-7 border border-white/[0.09]">
+        <div className="absolute inset-x-0 top-1/2 h-px bg-white/[0.05]" />
+        <div className="absolute inset-y-0 left-1/2 w-px bg-white/[0.05]" />
         <span className="absolute -top-2 -left-2 text-[11px] font-mono text-white/35 leading-none">+</span>
         <span className="absolute -top-2 -right-2 text-[11px] font-mono text-white/35 leading-none">+</span>
         <span className="absolute -bottom-2 -left-2 text-[11px] font-mono text-white/35 leading-none">+</span>
@@ -91,7 +99,7 @@ export function WelcomeScreen({ onEnter }: WelcomeScreenProps) {
       </div>
 
       {/* Content Layer */}
-      <div className="relative z-10 h-full w-full flex flex-col justify-between p-8 sm:p-12">
+      <div className="relative z-10 h-full w-full flex flex-col justify-between p-7 sm:p-11">
         {/* Top Hairline Telemetry Bar */}
         <header className="flex items-center justify-between text-[10px] sm:text-[11px] font-mono tracking-[0.22em] uppercase text-white/55 border-b border-white/[0.08] pb-3">
           <div className="flex items-center gap-2.5">
@@ -104,9 +112,9 @@ export function WelcomeScreen({ onEnter }: WelcomeScreenProps) {
             />
             <span>
               {gpuMode === 'webgpu'
-                ? 'VGPU // WEBGPU WGSL'
+                ? 'VGPU // WEBGPU WGSL + HAIRLINE'
                 : gpuMode === 'fallback'
-                  ? 'GPU // 2D FALLBACK'
+                  ? 'GPU // 2D FALLBACK + HAIRLINE'
                   : 'INITIALIZING GPU'}
             </span>
           </div>
@@ -125,39 +133,76 @@ export function WelcomeScreen({ onEnter }: WelcomeScreenProps) {
           </a>
         </header>
 
-        {/* Dead-Center Hero + Hairline ENTER Button */}
-        <main className="flex-1 flex flex-col items-center justify-center text-center px-4">
-          <div className="text-[10px] sm:text-[11px] font-mono uppercase tracking-[0.36em] text-emerald-300/80 mb-4">
-            Live-Coding Audio Visual Workstation
-          </div>
-
-          <h1 className="text-4xl sm:text-6xl md:text-7xl font-semibold tracking-[0.22em] text-white pl-[0.22em]">
-            VAYESSA LOOP
-          </h1>
-
-          {/* Ultra-thin Hairline Divider */}
-          <div className="w-40 sm:w-56 h-px bg-gradient-to-r from-transparent via-white/30 to-transparent my-8" />
-
-          {/* Dead-Center Magnetic Hairline ENTER Button */}
-          <div className="relative flex items-center justify-center">
-            {/* Subtle Rotating Orbital Hairline Ring */}
-            <div className="pointer-events-none absolute w-48 h-48 sm:w-56 sm:h-56 rounded-full border border-white/[0.08] animate-[spin_28s_linear_infinite]">
-              <span className="absolute -top-0.5 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-emerald-400/80 shadow-[0_0_10px_#34d399]" />
+        {/* Center 3-Column Stage: Left Hairline Figures | Dead-Center ENTER | Right Hairline Figures */}
+        <main className="flex-1 grid grid-cols-1 lg:grid-cols-[220px_1fr_220px] xl:grid-cols-[260px_1fr_260px] items-center gap-6 py-4 min-h-0">
+          {/* Left Interactive Isometric Hairline Instruments */}
+          <div className="hidden lg:flex flex-col gap-4">
+            <div className="p-2.5 rounded-xl bg-[#0b0e14]/75 backdrop-blur-sm border border-white/[0.08]">
+              <Patch play intensity={0.75} theme="dark" />
+              <div className="mt-1.5 flex items-center justify-between text-[9px] font-mono tracking-[0.2em] uppercase text-white/40">
+                <span>01 // PATCH</span>
+                <span className="text-emerald-400/75">MIDI + ROUTING</span>
+              </div>
             </div>
-            <div className="pointer-events-none absolute w-36 h-36 sm:w-44 sm:h-44 rounded-full border border-dashed border-white/[0.07]" />
-
-            <button
-              type="button"
-              onClick={handleEnter}
-              className="group relative inline-flex items-center gap-3 px-8 py-3.5 rounded-full bg-white/[0.04] hover:bg-emerald-400/[0.12] backdrop-blur-md border border-white/25 hover:border-emerald-300/80 text-xs sm:text-sm font-mono font-semibold tracking-[0.3em] uppercase text-white transition-all duration-300 shadow-[0_0_40px_rgba(52,211,153,0.08)] hover:shadow-[0_0_50px_rgba(52,211,153,0.28)] cursor-pointer"
-            >
-              <span className="pl-[0.3em]">ENTER</span>
-              <ArrowRight className="w-4 h-4 text-emerald-300 transition-transform duration-300 group-hover:translate-x-1" />
-            </button>
+            <div className="p-2.5 rounded-xl bg-[#0b0e14]/75 backdrop-blur-sm border border-white/[0.08]">
+              <Keyboard play intensity={0.75} theme="dark" />
+              <div className="mt-1.5 flex items-center justify-between text-[9px] font-mono tracking-[0.2em] uppercase text-white/40">
+                <span>02 // KEYS</span>
+                <span className="text-cyan-400/75">LIVE CAPTURE</span>
+              </div>
+            </div>
           </div>
 
-          <div className="mt-12 text-[10px] font-mono tracking-[0.25em] uppercase text-white/35">
-            Click Enter or Press [Return] to Unlock Audio
+          {/* Dead-Center Hero + Hairline ENTER Button */}
+          <div className="flex flex-col items-center justify-center text-center px-4">
+            <div className="text-[10px] sm:text-[11px] font-mono uppercase tracking-[0.36em] text-emerald-300/80 mb-3">
+              Live-Coding Audio Visual Workstation
+            </div>
+
+            <h1 className="text-4xl sm:text-6xl xl:text-7xl font-semibold tracking-[0.22em] text-white pl-[0.22em]">
+              VAYESSA LOOP
+            </h1>
+
+            <div className="w-40 sm:w-56 h-px bg-gradient-to-r from-transparent via-white/30 to-transparent my-7" />
+
+            {/* Dead-Center Magnetic Hairline ENTER Button */}
+            <div className="relative flex items-center justify-center">
+              <div className="pointer-events-none absolute w-48 h-48 sm:w-56 sm:h-56 rounded-full border border-white/[0.08] animate-[spin_28s_linear_infinite]">
+                <span className="absolute -top-0.5 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-emerald-400/80 shadow-[0_0_10px_#34d399]" />
+              </div>
+              <div className="pointer-events-none absolute w-36 h-36 sm:w-44 sm:h-44 rounded-full border border-dashed border-white/[0.07]" />
+
+              <button
+                type="button"
+                onClick={handleEnter}
+                className="group relative inline-flex items-center gap-3 px-8 py-3.5 rounded-full bg-[#0b0e14]/75 hover:bg-emerald-400/[0.14] backdrop-blur-md border border-white/25 hover:border-emerald-300/80 text-xs sm:text-sm font-mono font-semibold tracking-[0.3em] uppercase text-white transition-all duration-300 shadow-[0_0_40px_rgba(52,211,153,0.08)] hover:shadow-[0_0_50px_rgba(52,211,153,0.28)] cursor-pointer"
+              >
+                <span className="pl-[0.3em]">ENTER</span>
+                <ArrowRight className="w-4 h-4 text-emerald-300 transition-transform duration-300 group-hover:translate-x-1" />
+              </button>
+            </div>
+
+            <div className="mt-11 text-[10px] font-mono tracking-[0.25em] uppercase text-white/35">
+              Click Enter or Press [Return] to Unlock Audio
+            </div>
+          </div>
+
+          {/* Right Interactive Isometric Hairline Instruments */}
+          <div className="hidden lg:flex flex-col gap-4">
+            <div className="p-2.5 rounded-xl bg-[#0b0e14]/75 backdrop-blur-sm border border-white/[0.08]">
+              <Turntable play intensity={0.75} theme="dark" />
+              <div className="mt-1.5 flex items-center justify-between text-[9px] font-mono tracking-[0.2em] uppercase text-white/40">
+                <span>03 // DECK</span>
+                <span className="text-emerald-400/75">SAMPLER + FADE</span>
+              </div>
+            </div>
+            <div className="p-2.5 rounded-xl bg-[#0b0e14]/75 backdrop-blur-sm border border-white/[0.08]">
+              <Phosphor play intensity={0.75} theme="dark" />
+              <div className="mt-1.5 flex items-center justify-between text-[9px] font-mono tracking-[0.2em] uppercase text-white/40">
+                <span>04 // MATRIX</span>
+                <span className="text-cyan-400/75">HYDRA 3D + MCP</span>
+              </div>
+            </div>
           </div>
         </main>
 
