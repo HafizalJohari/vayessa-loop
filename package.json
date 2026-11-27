@@ -32,6 +32,7 @@
     "lucide-react": "^0.475.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "vgpu": "^0.6.0",
     "ws": "^8.23.0",
     "zod": "^4.6.7",
     "zustand": "^5.0.3"
@@ -42,6 +43,7 @@
     "@types/react": "^19.0.6",
     "@types/react-dom": "^19.0.4",
     "@types/ws": "^8.18.2",
+    "@vgpu/wgsl": "^0.6.0",
     "@vitejs/plugin-react": "^4.3.4",
     "tailwindcss": "^4.0.6",
     "typescript": "^5.7.3",

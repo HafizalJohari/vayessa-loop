@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   Activity,
   AudioWaveform,
@@ -21,6 +21,7 @@ import { SamplerPanel } from '@/components/Sampler/SamplerPanel';
 import { OscillatorPanel } from '@/components/Oscillator/OscillatorPanel';
 import { HydraPanel } from '@/components/Hydra/HydraPanel';
 import { HydraStageWindow } from '@/components/Hydra/HydraStageWindow';
+import { WelcomeScreen } from '@/components/Welcome/WelcomeScreen';
 import { McpModal } from '@/components/Mcp/McpModal';
 import { useStudioStore, type DockTab } from '@/store/useStudioStore';
 import { midiEngine } from '@/engine/midiEngine';
@@ -28,6 +29,8 @@ import { mcpBridge } from '@/engine/mcpBridge';
 import { hydraBridge } from '@/engine/hydraBridge';
 
 export function App() {
+  const [entered, setEntered] = useState(false);
+
   // Check if opened as dedicated 2nd Monitor Hydra Stage window (/?view=hydra)
   const isHydraStage =
     typeof window !== 'undefined' &&
@@ -37,10 +40,15 @@ export function App() {
     return <HydraStageWindow />;
   }
 
-  return <StudioMainWorkspace />;
+  return (
+    <>
+      {!entered && <WelcomeScreen onEnter={() => setEntered(true)} />}
+      <StudioMainWorkspace onShowWelcome={() => setEntered(false)} />
+    </>
+  );
 }
 
-function StudioMainWorkspace() {
+function StudioMainWorkspace({ onShowWelcome }: { onShowWelcome: () => void }) {
   const editorRef = useRef<StrudelEditorHandle | null>(null);
 
   const leftSidebarOpen = useStudioStore((s) => s.leftSidebarOpen);
@@ -80,7 +88,7 @@ function StudioMainWorkspace() {
   return (
     <div className="h-screen w-screen flex flex-col bg-[#0d0f12] text-[#e6eaf0] overflow-hidden">
       {/* Top Transport Bar */}
-      <TransportBar />
+      <TransportBar onLogoClick={onShowWelcome} />
 
       {/* Main 3-Column DAW Workspace */}
       <div className="flex-1 flex min-h-0 overflow-hidden">

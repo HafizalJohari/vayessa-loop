@@ -21,7 +21,11 @@ import { hydraBridge } from '@/engine/hydraBridge';
 import { audioRecorder } from '@/engine/audioRecorder';
 import type { StudioMode } from '@/types/studio';
 
-export function TransportBar() {
+interface TransportBarProps {
+  onLogoClick?: () => void;
+}
+
+export function TransportBar({ onLogoClick }: TransportBarProps = {}) {
   const isPlaying = useStudioStore((s) => s.isPlaying);
   const bpm = useStudioStore((s) => s.bpm);
   const masterGain = useStudioStore((s) => s.masterGain);
@@ -178,7 +182,12 @@ export function TransportBar() {
     <header className="h-13 shrink-0 flex items-center justify-between px-3 bg-[#12151b] border-b border-[#242a36] select-none gap-2">
       {/* Left: Brand, Panel Toggles & Studio Mode Switcher */}
       <div className="flex items-center gap-2.5">
-        <div className="flex items-center gap-2">
+        <button
+          type="button"
+          onClick={onLogoClick}
+          className="flex items-center gap-2 text-left hover:opacity-90 transition-opacity cursor-pointer"
+          title="Show Welcome Screen"
+        >
           <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-emerald-400 to-cyan-500 flex items-center justify-center shadow-lg shadow-emerald-500/20">
             <Activity className="w-4 h-4 text-[#0b0e11] stroke-[2.5]" />
           </div>
@@ -186,7 +195,7 @@ export function TransportBar() {
             <div className="text-xs font-bold tracking-wider text-white">VAYESSA LOOP</div>
             <div className="text-[10px] text-[#6d778a] font-mono">LIVE-CODING DAW</div>
           </div>
-        </div>
+        </button>
 
         <div className="h-5 w-px bg-[#242a36]" />
 
