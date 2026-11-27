@@ -17,7 +17,8 @@ export type McpCommandName =
   | 'add_to_playlist'
   | 'play_playlist_track'
   | 'set_hydra_visual'
-  | 'set_oscillator';
+  | 'set_oscillator'
+  | 'record_audio';
 
 export interface McpBridgeRequest {
   id: string;

@@ -154,6 +154,10 @@ interface StudioState {
   // Visual Oscillator Synth
   oscillator: OscillatorSettings;
 
+  // Audio WAV Recorder
+  isRecordingAudio: boolean;
+  recordingElapsedSec: number;
+
   // AI MCP Bridge
   mcpConnected: boolean;
   mcpModalOpen: boolean;
@@ -234,6 +238,8 @@ interface StudioState {
   updateOscillator: (patch: Partial<OscillatorSettings>) => void;
   resetOscillator: () => void;
 
+  setRecordingAudio: (recording: boolean, elapsedSec: number) => void;
+
   setMcpConnected: (connected: boolean) => void;
   setMcpModalOpen: (open: boolean) => void;
   pushMcpLog: (log: McpCommandLog) => void;
@@ -301,6 +307,9 @@ export const useStudioStore = create<StudioState>()(
       sequencerSyncEnabled: false,
 
       oscillator: { ...DEFAULT_OSCILLATOR_SETTINGS },
+
+      isRecordingAudio: false,
+      recordingElapsedSec: 0,
 
       mcpConnected: false,
       mcpModalOpen: false,
@@ -656,6 +665,9 @@ export const useStudioStore = create<StudioState>()(
           oscillator: { ...s.oscillator, ...patch },
         })),
       resetOscillator: () => set({ oscillator: { ...DEFAULT_OSCILLATOR_SETTINGS } }),
+
+      setRecordingAudio: (isRecordingAudio, recordingElapsedSec) =>
+        set({ isRecordingAudio, recordingElapsedSec }),
 
       setMcpConnected: (mcpConnected) => set({ mcpConnected }),
       setMcpModalOpen: (mcpModalOpen) => set({ mcpModalOpen }),

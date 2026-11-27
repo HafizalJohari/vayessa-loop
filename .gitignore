@@ -1,6 +1,7 @@
 node_modules/
 dist/
 dist-mcp/
+exports/
 .DS_Store
 *.log
 .env

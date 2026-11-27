@@ -1,5 +1,7 @@
 #!/usr/bin/env node
 import { randomUUID } from 'node:crypto';
+import fs from 'node:fs/promises';
+import path from 'node:path';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { WebSocketServer, WebSocket } from 'ws';
@@ -105,7 +107,8 @@ class StudioWsBridge {
 
   async sendCommand(
     command: McpCommandName,
-    args: Record<string, unknown> = {}
+    args: Record<string, unknown> = {},
+    timeoutMs = COMMAND_TIMEOUT_MS
   ): Promise<unknown> {
     const client = this.getActiveClient();
     if (!client) {
@@ -121,7 +124,7 @@ class StudioWsBridge {
       const timer = setTimeout(() => {
         this.pending.delete(id);
         reject(new Error(`Timed out waiting for Strudel Studio response to '${command}'`));
-      }, COMMAND_TIMEOUT_MS);
+      }, timeoutMs);
 
       this.pending.set(id, { resolve, reject, timer });
       client.send(JSON.stringify(payload));
@@ -367,6 +370,72 @@ server.tool(
     delay: z.number().min(0).max(0.8).optional(),
   },
   async (args) => runBridgeTool('set_oscillator', args)
+);
+
+server.tool(
+  'record_audio',
+  'Record live audio from VAYESSA LOOP for a specified duration (1-120s) and save a studio-quality 16-bit PCM WAV file directly to disk (ideal for video motion graphics, Remotion, or video editors). Returns the exact saved file path.',
+  {
+    durationSeconds: z
+      .number()
+      .min(1)
+      .max(120)
+      .default(15)
+      .describe('Recording duration in seconds (1 to 120)'),
+    fileName: z
+      .string()
+      .optional()
+      .describe('Output filename (e.g. "motion-bgm.wav"). Saved in ./exports/ unless outputPath is provided.'),
+    outputPath: z
+      .string()
+      .optional()
+      .describe('Optional absolute path where the WAV file should be saved on disk'),
+    autoPlay: z.boolean().optional().default(true).describe('Start playback automatically before recording'),
+    autoStopAfter: z.boolean().optional().default(true).describe('Stop playback after recording finishes'),
+  },
+  async (args) => {
+    try {
+      const timeoutMs = Math.max(COMMAND_TIMEOUT_MS, (args.durationSeconds + 20) * 1000);
+      const res = (await bridge.sendCommand(
+        'record_audio',
+        {
+          durationSeconds: args.durationSeconds,
+          autoPlay: args.autoPlay,
+          autoStopAfter: args.autoStopAfter,
+        },
+        timeoutMs
+      )) as {
+        base64Wav: string;
+        durationSec: number;
+        sampleRate: number;
+        byteLength: number;
+      };
+
+      const defaultName =
+        args.fileName && args.fileName.trim()
+          ? args.fileName.trim().endsWith('.wav')
+            ? args.fileName.trim()
+            : `${args.fileName.trim()}.wav`
+          : `vayessa-loop-${Date.now()}.wav`;
+
+      const targetPath = args.outputPath
+        ? path.resolve(args.outputPath)
+        : path.resolve(process.cwd(), 'exports', defaultName);
+
+      await fs.mkdir(path.dirname(targetPath), { recursive: true });
+      await fs.writeFile(targetPath, Buffer.from(res.base64Wav, 'base64'));
+
+      return toTextResult({
+        ok: true,
+        savedPath: targetPath,
+        durationSec: res.durationSec,
+        sampleRate: res.sampleRate,
+        byteLength: res.byteLength,
+      });
+    } catch (err) {
+      return toErrorResult(err);
+    }
+  }
 );
 
 // --- MCP RESOURCES ---

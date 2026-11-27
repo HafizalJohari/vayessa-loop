@@ -3,6 +3,8 @@ import {
   Activity,
   Bot,
   Cable,
+  Circle,
+  Download,
   Monitor,
   PanelBottom,
   PanelLeft,
@@ -16,6 +18,7 @@ import { useStudioStore } from '@/store/useStudioStore';
 import { strudelEngine } from '@/engine/strudelEngine';
 import { midiEngine } from '@/engine/midiEngine';
 import { hydraBridge } from '@/engine/hydraBridge';
+import { audioRecorder } from '@/engine/audioRecorder';
 import type { StudioMode } from '@/types/studio';
 
 export function TransportBar() {
@@ -35,6 +38,8 @@ export function TransportBar() {
   const studioMode = useStudioStore((s) => s.studioMode);
   const setStudioMode = useStudioStore((s) => s.setStudioMode);
   const hydraStageConnected = useStudioStore((s) => s.hydraStageConnected);
+  const isRecordingAudio = useStudioStore((s) => s.isRecordingAudio);
+  const recordingElapsedSec = useStudioStore((s) => s.recordingElapsedSec);
 
   const leftSidebarOpen = useStudioStore((s) => s.leftSidebarOpen);
   const rightPanelOpen = useStudioStore((s) => s.rightPanelOpen);
@@ -141,6 +146,30 @@ export function TransportBar() {
     } else {
       void strudelEngine.evaluate(useStudioStore.getState().code);
     }
+  };
+
+  const handleToggleRecordWav = async () => {
+    try {
+      if (isRecordingAudio) {
+        const res = await audioRecorder.stopRecording();
+        audioRecorder.downloadWav(res.wavBlob);
+      } else {
+        if (!useStudioStore.getState().isPlaying) {
+          await strudelEngine.evaluate(useStudioStore.getState().code);
+        }
+        await audioRecorder.startRecording();
+      }
+    } catch (err) {
+      useStudioStore
+        .getState()
+        .setStatusMessage(err instanceof Error ? err.message : 'WAV recording failed');
+    }
+  };
+
+  const formatRecTime = (sec: number) => {
+    const m = String(Math.floor(sec / 60)).padStart(2, '0');
+    const s = String(sec % 60).padStart(2, '0');
+    return `${m}:${s}`;
   };
 
   const isLearningBpm = learningTarget?.kind === 'bpm';
@@ -252,6 +281,30 @@ export function TransportBar() {
           title="Stop All (Cmd+.)"
         >
           <Square className="w-3.5 h-3.5 fill-current" />
+        </button>
+
+        {/* Record & Export WAV Button */}
+        <button
+          type="button"
+          onClick={() => void handleToggleRecordWav()}
+          className={`inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-semibold transition-all cursor-pointer ${
+            isRecordingAudio
+              ? 'bg-rose-500 text-white shadow-md shadow-rose-500/30 animate-pulse'
+              : 'bg-[#1c222d] text-[#c5cfdf] hover:text-rose-300 hover:bg-rose-500/15'
+          }`}
+          title={isRecordingAudio ? 'Stop Recording & Download WAV' : 'Record Audio & Export WAV'}
+        >
+          {isRecordingAudio ? (
+            <>
+              <Download className="w-3 h-3" />
+              <span className="font-mono">{formatRecTime(recordingElapsedSec)}</span>
+            </>
+          ) : (
+            <>
+              <Circle className="w-2.5 h-2.5 fill-rose-500 text-rose-500" />
+              <span className="hidden sm:inline">WAV</span>
+            </>
+          )}
         </button>
 
         <div className="hidden lg:flex items-center gap-1 px-1">

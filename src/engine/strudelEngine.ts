@@ -300,6 +300,14 @@ class StrudelEngineService {
     return this.analyser;
   }
 
+  getDestinationGainNode(): GainNode | null {
+    return this.getSuperdoughDestinationGain();
+  }
+
+  getAudioCtx(): AudioContext {
+    return strudelWebaudio.getAudioContext();
+  }
+
   /**
    * Boot a real hydra-synth instance in the main window (just like strudel.cc's initHydra)
    * exposing s0..s3, o0..o3, osc, noise, voronoi, shape, src, render, and audio-reactive a.fft[0..3].

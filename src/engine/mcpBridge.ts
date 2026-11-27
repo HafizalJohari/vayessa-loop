@@ -4,6 +4,7 @@ import { strudelEngine } from '@/engine/strudelEngine';
 import { midiEngine } from '@/engine/midiEngine';
 import { transitionEngine } from '@/engine/transitionEngine';
 import { hydraBridge } from '@/engine/hydraBridge';
+import { audioRecorder } from '@/engine/audioRecorder';
 import { STUDIO_PRESETS } from '@/data/presets';
 import { HYDRA_PRESETS } from '@/data/hydraPresets';
 import { CODE_SNIPPETS, SAMPLE_CATALOG } from '@/data/samples';
@@ -311,6 +312,21 @@ export async function executeMcpCommand(
       }
       store.updateOscillator(patch);
       return { ok: true, oscillator: useStudioStore.getState().oscillator };
+    }
+
+    case 'record_audio': {
+      const durationSeconds = Number(args.durationSeconds ?? 10);
+      const autoPlay = args.autoPlay !== false;
+      const autoStopAfter = Boolean(args.autoStopAfter);
+      const recorded = await audioRecorder.recordTimedWavBase64(
+        durationSeconds,
+        autoPlay,
+        autoStopAfter
+      );
+      return {
+        ok: true,
+        ...recorded,
+      };
     }
 
     default:
