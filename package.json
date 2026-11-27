@@ -1,0 +1,50 @@
+{
+  "name": "strudel-studio",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build && npm run build:mcp",
+    "build:mcp": "tsc -p tsconfig.mcp.json",
+    "mcp": "node dist-mcp/mcp-server/index.js",
+    "preview": "vite preview",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@codemirror/commands": "^6.7.1",
+    "@codemirror/lang-javascript": "^6.2.2",
+    "@codemirror/state": "^6.5.0",
+    "@codemirror/theme-one-dark": "^6.1.2",
+    "@codemirror/view": "^6.35.0",
+    "@modelcontextprotocol/sdk": "^1.32.2",
+    "@strudel/codemirror": "^1.2.6",
+    "@strudel/core": "^1.2.6",
+    "@strudel/draw": "^1.2.6",
+    "@strudel/midi": "^1.2.6",
+    "@strudel/mini": "^1.2.6",
+    "@strudel/soundfonts": "^1.2.6",
+    "@strudel/tonal": "^1.2.6",
+    "@strudel/transpiler": "^1.2.6",
+    "@strudel/webaudio": "^1.2.6",
+    "hydra-synth": "^1.4.0",
+    "lucide-react": "^0.475.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "ws": "^8.23.0",
+    "zod": "^4.6.7",
+    "zustand": "^5.0.3"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.0.6",
+    "@types/node": "^22.13.4",
+    "@types/react": "^19.0.6",
+    "@types/react-dom": "^19.0.4",
+    "@types/ws": "^8.18.2",
+    "@vitejs/plugin-react": "^4.3.4",
+    "tailwindcss": "^4.0.6",
+    "typescript": "^5.7.3",
+    "vite": "^6.1.1",
+    "vitest": "^3.0.6"
+  }
+}
