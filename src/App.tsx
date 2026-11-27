@@ -22,6 +22,7 @@ import { OscillatorPanel } from '@/components/Oscillator/OscillatorPanel';
 import { HydraPanel } from '@/components/Hydra/HydraPanel';
 import { HydraStageWindow } from '@/components/Hydra/HydraStageWindow';
 import { WelcomeScreen } from '@/components/Welcome/WelcomeScreen';
+import { GuidePage } from '@/components/Guide/GuidePage';
 import { McpModal } from '@/components/Mcp/McpModal';
 import { useStudioStore, type DockTab } from '@/store/useStudioStore';
 import { midiEngine } from '@/engine/midiEngine';
@@ -29,26 +30,65 @@ import { mcpBridge } from '@/engine/mcpBridge';
 import { hydraBridge } from '@/engine/hydraBridge';
 
 export function App() {
-  const [entered, setEntered] = useState(false);
+  const initialView =
+    typeof window !== 'undefined'
+      ? new URLSearchParams(window.location.search).get('view')
+      : null;
 
-  // Check if opened as dedicated 2nd Monitor Hydra Stage window (/?view=hydra)
-  const isHydraStage =
-    typeof window !== 'undefined' &&
-    new URLSearchParams(window.location.search).get('view') === 'hydra';
+  const [page, setPage] = useState<'welcome' | 'guide' | 'studio'>(
+    initialView === 'guide' ? 'guide' : 'welcome'
+  );
 
-  if (isHydraStage) {
+  // Dedicated 2nd Monitor Hydra Stage window (/?view=hydra)
+  if (initialView === 'hydra') {
     return <HydraStageWindow />;
+  }
+
+  const navigate = (next: 'welcome' | 'guide' | 'studio') => {
+    setPage(next);
+    if (typeof window !== 'undefined') {
+      const url = new URL(window.location.href);
+      if (next === 'guide') {
+        url.searchParams.set('view', 'guide');
+      } else {
+        url.searchParams.delete('view');
+      }
+      window.history.replaceState({}, '', url.toString());
+    }
+  };
+
+  if (page === 'guide') {
+    return (
+      <GuidePage
+        onLaunchStudio={() => navigate('studio')}
+        onBackWelcome={() => navigate('welcome')}
+      />
+    );
   }
 
   return (
     <>
-      {!entered && <WelcomeScreen onEnter={() => setEntered(true)} />}
-      <StudioMainWorkspace onShowWelcome={() => setEntered(false)} />
+      {page === 'welcome' && (
+        <WelcomeScreen
+          onEnter={() => navigate('studio')}
+          onOpenGuide={() => navigate('guide')}
+        />
+      )}
+      <StudioMainWorkspace
+        onShowWelcome={() => navigate('welcome')}
+        onOpenGuide={() => navigate('guide')}
+      />
     </>
   );
 }
 
-function StudioMainWorkspace({ onShowWelcome }: { onShowWelcome: () => void }) {
+function StudioMainWorkspace({
+  onShowWelcome,
+  onOpenGuide,
+}: {
+  onShowWelcome: () => void;
+  onOpenGuide: () => void;
+}) {
   const editorRef = useRef<StrudelEditorHandle | null>(null);
 
   const leftSidebarOpen = useStudioStore((s) => s.leftSidebarOpen);
@@ -88,7 +128,7 @@ function StudioMainWorkspace({ onShowWelcome }: { onShowWelcome: () => void }) {
   return (
     <div className="h-screen w-screen flex flex-col bg-[#0d0f12] text-[#e6eaf0] overflow-hidden">
       {/* Top Transport Bar */}
-      <TransportBar onLogoClick={onShowWelcome} />
+      <TransportBar onLogoClick={onShowWelcome} onOpenGuide={onOpenGuide} />
 
       {/* Main 3-Column DAW Workspace */}
       <div className="flex-1 flex min-h-0 overflow-hidden">

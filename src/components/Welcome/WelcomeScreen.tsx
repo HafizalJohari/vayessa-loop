@@ -7,6 +7,7 @@ import { uiSound } from '@/engine/uiSound';
 
 interface WelcomeScreenProps {
   onEnter: () => void;
+  onOpenGuide?: () => void;
 }
 
 const HAIRLINE_THEME_VARS: React.CSSProperties = {
@@ -18,7 +19,7 @@ const HAIRLINE_THEME_VARS: React.CSSProperties = {
   ['--hairline-stroke' as string]: '0.9',
 };
 
-export function WelcomeScreen({ onEnter }: WelcomeScreenProps) {
+export function WelcomeScreen({ onEnter, onOpenGuide }: WelcomeScreenProps) {
   const [gpuMode, setGpuMode] = useState<GpuRendererMode>('initializing');
   const [exiting, setExiting] = useState(false);
   const [sfxEnabled, setSfxEnabled] = useState(true);
@@ -95,6 +96,20 @@ export function WelcomeScreen({ onEnter }: WelcomeScreenProps) {
           </div>
 
           <div className="flex items-center gap-4">
+            {onOpenGuide && (
+              <button
+                type="button"
+                onClick={() => {
+                  uiSound.playHover('link');
+                  onOpenGuide();
+                }}
+                onMouseEnter={() => uiSound.playHover('link')}
+                className="text-emerald-300/85 hover:text-emerald-200 transition-colors cursor-pointer"
+              >
+                HOW TO USE
+              </button>
+            )}
+
             <button
               type="button"
               onClick={() => {
@@ -181,8 +196,24 @@ export function WelcomeScreen({ onEnter }: WelcomeScreenProps) {
               </button>
             </div>
 
-            <div className="mt-11 text-[10px] font-mono tracking-[0.25em] uppercase text-white/35">
-              Click Enter or Press [Return] to Unlock Audio
+            <div className="mt-11 flex items-center gap-4 text-[10px] font-mono tracking-[0.25em] uppercase text-white/35">
+              <span>Press [Return] to Unlock Audio</span>
+              {onOpenGuide && (
+                <>
+                  <span>·</span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      uiSound.playHover('link');
+                      onOpenGuide();
+                    }}
+                    onMouseEnter={() => uiSound.playHover('link')}
+                    className="text-emerald-300/80 hover:text-emerald-200 underline underline-offset-4 cursor-pointer"
+                  >
+                    Read Interactive Guide
+                  </button>
+                </>
+              )}
             </div>
           </div>
 

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import {
   Activity,
+  BookOpen,
   Bot,
   Cable,
   Circle,
@@ -23,9 +24,10 @@ import type { StudioMode } from '@/types/studio';
 
 interface TransportBarProps {
   onLogoClick?: () => void;
+  onOpenGuide?: () => void;
 }
 
-export function TransportBar({ onLogoClick }: TransportBarProps = {}) {
+export function TransportBar({ onLogoClick, onOpenGuide }: TransportBarProps = {}) {
   const isPlaying = useStudioStore((s) => s.isPlaying);
   const bpm = useStudioStore((s) => s.bpm);
   const masterGain = useStudioStore((s) => s.masterGain);
@@ -366,8 +368,20 @@ export function TransportBar({ onLogoClick }: TransportBarProps = {}) {
         </div>
       </div>
 
-      {/* Right: Hydra 2nd Monitor + AI MCP + MIDI Pill + Master Meter & Gain */}
+      {/* Right: Guide + Hydra 2nd Monitor + AI MCP + MIDI Pill + Master Meter & Gain */}
       <div className="flex items-center gap-1.5">
+        {onOpenGuide && (
+          <button
+            type="button"
+            onClick={onOpenGuide}
+            className="flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs border bg-[#171b22] border-[#262d3a] text-[#8b95a7] hover:text-emerald-300 transition-all cursor-pointer"
+            title="How to Use VAYESSA LOOP (Interactive Guide)"
+          >
+            <BookOpen className="w-3.5 h-3.5" />
+            <span className="font-medium hidden 2xl:inline">Guide</span>
+          </button>
+        )}
+
         <button
           type="button"
           onClick={() => hydraBridge.openSecondMonitorWindow()}
