@@ -340,6 +340,14 @@ class McpBrowserBridge {
   private stopped = false;
 
   start(url = DEFAULT_BRIDGE_URL): void {
+    // Only auto-connect local MCP WebSocket bridge when running on localhost/127.0.0.1
+    if (typeof window !== 'undefined') {
+      const host = window.location.hostname;
+      const isLocal = host === 'localhost' || host === '127.0.0.1' || host === '[::1]';
+      if (!isLocal) {
+        return;
+      }
+    }
     this.stopped = false;
     this.connect(url);
   }

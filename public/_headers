@@ -1,0 +1,6 @@
+/*
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob:; media-src 'self' blob: data:; worker-src 'self' blob:; connect-src 'self' blob: data: https://raw.githubusercontent.com https://github.com https://objects.githubusercontent.com https://cdn.jsdelivr.net https://unpkg.com https://felixroos.github.io https://gleitz.github.io; frame-ancestors 'none'; base-uri 'self'; object-src 'none'
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY
+  Referrer-Policy: no-referrer
+  Permissions-Policy: midi=(self), camera=(self), microphone=(), geolocation=(), payment=(), usb=()

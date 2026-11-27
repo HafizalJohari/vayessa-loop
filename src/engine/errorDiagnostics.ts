@@ -179,7 +179,21 @@ export function parseStrudelError(
   let suggestion = 'Check the syntax around the highlighted line for missing commas, brackets, or typos.';
   let quickFix: SyntaxDiagnostic['quickFix'];
 
-  // 2. Detect method/function typo: "xxx is not a function" or "xxx is not defined"
+  // 2. Detect Fraction.js "Division by Zero" (usually slow(0), fast(0), loopAt(0), chop(0), slice(0), or /0 in mini-notation)
+  if (/division by zero/i.test(rawMessage)) {
+    const zeroDivRegex =
+      /\b(slow|fast|loopAt|loopat|chop|slice|setcpm|setcps)\s*\(\s*0\s*[,)]|\/\s*0\b/;
+    const foundZeroIdx = lines.findIndex((l) => zeroDivRegex.test(l));
+    if (foundZeroIdx !== -1) {
+      line = foundZeroIdx + 1;
+      const m = zeroDivRegex.exec(lines[foundZeroIdx]);
+      column = m ? m.index + 1 : 1;
+    }
+    suggestion =
+      'Division by Zero happens when a timing/slice function receives 0 (e.g. .slow(0), .fast(0), .loopAt(0), .chop(0), .slice(0, ...), or "/0" in mini-notation). Change that 0 to a positive number (e.g. 1, 2, or 4), or use s("sample").slow(2) instead of .loopAt().';
+  }
+
+  // 3. Detect method/function typo: "xxx is not a function" or "xxx is not defined"
   const notFuncMatch = /\.?(\w+)\s+is not a function/i.exec(rawMessage);
   const notDefMatch = /(\w+)\s+is not defined/i.exec(rawMessage);
   const badIdentifier = notFuncMatch?.[1] ?? notDefMatch?.[1];
